@@ -11,9 +11,12 @@ lookup hits).
 ## Contents
 
 - `Dockerfile` — overlay on `vllm/vllm-openai:qwen38-flash-next` (base must exist
-  locally; it is a custom home-built image)
-- `lmcache-0.5.5rc2.dev16-cp312-cp312-linux_x86_64.whl` — prebuilt wheel
-  (CUDA 13 / torch 2.11 cu130 toolchain, `TORCH_CUDA_ARCH_LIST=12.0`, Python 3.12)
+  locally; it is a custom home-built image). Pulls the LMCache wheel from this
+  repo's GitHub releases (public; no auth at build time), verifies its SHA256,
+  then force-installs it. Override the wheel with
+  `--build-arg LMCACHE_WHEEL_URL=...`.
+- Wheel: attached to release [`v0.5.5rc2.dev16`](https://github.com/thefnordling/llmcache-server/releases/tag/v0.5.5rc2.dev16)
+  (CUDA 13 / torch cu130 toolchain, `TORCH_CUDA_ARCH_LIST=12.0`, Python 3.12)
   - SHA256: `108bae056c57270f51ec0eb53968681206b67b39eee974d12985e8eec2ef457f`
 
 ## Provenance
