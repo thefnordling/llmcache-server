@@ -29,13 +29,13 @@ lookup hits).
 ## Provenance
 
 Wheel source: [`thefnordling/LMCache`](https://github.com/thefnordling/LMCache)
-branch `feat-qwen38-flash-next-support`, commit `5065d6ab`, on top of LMCache `dev`
-(`56e45ff7`):
+branch `feat-qwen38-flash-next-support`, rebased on LMCache `dev`
+(`bbd38f08`):
 
 | Commit | Change |
 |---|---|
-| `6ca03b45` | Cherry-pick of LMCache PR [#4772](https://github.com/LMCache/LMCache/pull/4772) — padded NHD content-size KV layout support (needed for vLLM's layer-padded KV pools) |
-| `5065d6ab` | Hybrid state-page fixes: store gate + lookup window (see below) |
+| `50a7fbc4` | Padded NHD content-size KV cache support (needed for vLLM's layer-padded KV pools) |
+| `55dd23e7` | Hybrid state-page fixes: store gate + lookup window (see below) |
 
 **Store path fix:** `GetStoreMetadata` bounded the storable prefix with
 `min(len(ids) * tokens_per_block)` across *all* engine groups. Constant-size
@@ -62,14 +62,14 @@ build; point `VLLM_BASE` at your own vLLM image otherwise). The wheel is
 compiled during the build (~5 min), so no prebuilt blob is trusted:
 
 ```bash
-docker build -t vllm/vllm-openai:qwen38-flash-next-pr4772-gate .
+docker build -t thefnordling/lmcache-server:qwen38-flash-next-hybrid .
 
 # What did I just build? Branch in the labels; the receipt inside the image
 # records the exact commit the branch was at when the wheel was compiled:
-docker inspect vllm/vllm-openai:qwen38-flash-next-pr4772-gate \
+docker inspect thefnordling/lmcache-server:qwen38-flash-next-hybrid \
   --format '{{ index .Config.Labels "io.llmcache.source-branch" }}'
 docker run --rm --entrypoint cat \
-  vllm/vllm-openai:qwen38-flash-next-pr4772-gate \
+  thefnordling/lmcache-server:qwen38-flash-next-hybrid \
   /usr/local/share/llmcache-server/BUILD_INFO
 ```
 

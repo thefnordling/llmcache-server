@@ -27,8 +27,9 @@ RUN apk add --no-cache git \
 
 # ---- Stage 2: build the wheel in the matching CUDA/torch toolchain --------
 FROM ${VLLM_BASE} AS lmcache-wheel
+ARG LMCACHE_VERSION=0.5.5rc2.dev17
 ENV TORCH_CUDA_ARCH_LIST=12.0 \
-    SETUPTOOLS_SCM_PRETEND_VERSION=0.5.5rc2.dev16 \
+    SETUPTOOLS_SCM_PRETEND_VERSION=${LMCACHE_VERSION} \
     CPATH=/usr/local/lib/python3.12/dist-packages/nvidia/cu13/include \
     LIBRARY_PATH=/usr/local/lib/python3.12/dist-packages/nvidia/cu13/lib
 COPY --from=lmcache-src /src.tar /src.tar
