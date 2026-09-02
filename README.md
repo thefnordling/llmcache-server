@@ -10,17 +10,19 @@ lookup hits).
 
 ## Contents
 
-- `Dockerfile` — **multi-stage** overlay; no binary artifacts in this repo.
-  1. `lmcache-src` (alpine): clones the fork, checks out the pinned commit
-     (`git rev-parse` verified), exports it via `git archive`.
+- `Dockerfile` — **multi-stage** overlay; no binary artifacts, no commit
+  SHAs to read or maintain.
+  1. `lmcache-src` (alpine): clones the fork at the tip of the requested
+     **branch** and writes a provenance receipt (`BUILD_INFO`: repo, branch,
+     commit the branch pointed at) — recorded at build time, never an input.
   2. `lmcache-wheel`: builds the wheel from that exact tree inside the same
      CUDA/torch environment as the final image (native extensions must match
      the runtime torch).
   3. final: `COPY`s the freshly built wheel into the vLLM base and
-     force-installs it. The image carries an
-     `io.llmcache.source-commit` label.
+     force-installs it; `BUILD_INFO` ships at
+     `/usr/local/share/llmcache-server/BUILD_INFO`.
 
-  Build args: `LMCACHE_REPO`, `LMCACHE_BRANCH`, `LMCACHE_COMMIT` (pin),
+  Build args: `LMCACHE_REPO`, `LMCACHE_BRANCH` (the only source reference),
   `VLLM_BASE` (the vLLM image to overlay; must exist locally — the default is
   a custom home-built image).
 
@@ -61,7 +63,14 @@ compiled during the build (~5 min), so no prebuilt blob is trusted:
 
 ```bash
 docker build -t vllm/vllm-openai:qwen38-flash-next-pr4772-gate .
-docker inspect vllm/vllm-openai:qwen38-flash-next-pr4772-gate   --format '{{ index .Config.Labels "io.llmcache.source-commit" }}'
+
+# What did I just build? Branch in the labels; the receipt inside the image
+# records the exact commit the branch was at when the wheel was compiled:
+docker inspect vllm/vllm-openai:qwen38-flash-next-pr4772-gate \
+  --format '{{ index .Config.Labels "io.llmcache.source-branch" }}'
+docker run --rm --entrypoint cat \
+  vllm/vllm-openai:qwen38-flash-next-pr4772-gate \
+  /usr/local/share/llmcache-server/BUILD_INFO
 ```
 
 ## Run (MP server)
