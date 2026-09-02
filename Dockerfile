@@ -2,7 +2,7 @@
 # image's provenance is a git branch you can check out yourself — no binary
 # blobs, no commit SHAs to type or trust.
 #
-#   docker build -t vllm/vllm-openai:qwen38-flash-next-pr4772-gate .
+#   docker build -t thefnordling/lmcache-server:qwen38-flash-next-hybrid .
 #
 # The only source reference is a branch name. At build time the clone writes
 # down which commit the branch pointed at — a receipt, not an input — to
