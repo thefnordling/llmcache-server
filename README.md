@@ -29,7 +29,7 @@ lookup hits).
 ## Provenance
 
 Wheel source: [`thefnordling/LMCache`](https://github.com/thefnordling/LMCache)
-branch `pr4772-gate-validation`, commit `5065d6ab`, on top of LMCache `dev`
+branch `feat-qwen38-flash-next-support`, commit `5065d6ab`, on top of LMCache `dev`
 (`56e45ff7`):
 
 | Commit | Change |

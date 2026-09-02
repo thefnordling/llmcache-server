@@ -17,7 +17,7 @@ ARG VLLM_BASE=vllm/vllm-openai:qwen38-flash-next
 # ---- Stage 1: clone the branch tip and freeze it for the build ------------
 FROM alpine:3.20 AS lmcache-src
 ARG LMCACHE_REPO=https://github.com/thefnordling/LMCache.git
-ARG LMCACHE_BRANCH=pr4772-gate-validation
+ARG LMCACHE_BRANCH=feat-qwen38-flash-next-support
 RUN apk add --no-cache git \
  && git clone --branch "${LMCACHE_BRANCH}" --single-branch "${LMCACHE_REPO}" /LMCache \
  && cd /LMCache \
@@ -39,7 +39,7 @@ RUN mkdir -p /src && tar -xf /src.tar -C /src \
 # ---- Stage 3: final image = base + freshly built wheel --------------------
 FROM ${VLLM_BASE}
 ARG LMCACHE_REPO=https://github.com/thefnordling/LMCache.git
-ARG LMCACHE_BRANCH=pr4772-gate-validation
+ARG LMCACHE_BRANCH=feat-qwen38-flash-next-support
 COPY --from=lmcache-src /BUILD_INFO /usr/local/share/llmcache-server/BUILD_INFO
 COPY --from=lmcache-wheel /wheels/lmcache-*.whl /tmp/
 RUN pip install --force-reinstall --no-deps /tmp/lmcache-*.whl \
