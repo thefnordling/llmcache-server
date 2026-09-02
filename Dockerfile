@@ -5,7 +5,10 @@ FROM vllm/vllm-openai:qwen38-flash-next
 # Override LMCACHE_WHEEL_URL to pin a different release.
 ARG LMCACHE_WHEEL_URL=https://github.com/thefnordling/llmcache-server/releases/download/v0.5.5rc2.dev16/lmcache-0.5.5rc2.dev16-cp312-cp312-linux_x86_64.whl
 ADD ${LMCACHE_WHEEL_URL} /tmp/lmcache.whl
+# ADD flattens the URL filename; pip requires a valid wheel filename, so
+# restore the basename from the URL before installing.
 RUN echo "108bae056c57270f51ec0eb53968681206b67b39eee974d12985e8eec2ef457f  /tmp/lmcache.whl" | sha256sum -c - \
- && pip install --force-reinstall --no-deps /tmp/lmcache.whl \
- && rm -f /tmp/lmcache.whl \
+ && mv /tmp/lmcache.whl "/tmp/$(basename "$LMCACHE_WHEEL_URL")" \
+ && pip install --force-reinstall --no-deps "/tmp/$(basename "$LMCACHE_WHEEL_URL")" \
+ && rm -f "/tmp/$(basename "$LMCACHE_WHEEL_URL")" \
  && python3 -c "import lmcache; print(lmcache.__version__)"
