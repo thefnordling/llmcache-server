@@ -17,7 +17,7 @@ ARG VLLM_BASE=vllm/vllm-openai:qwen38-flash-next
 # ---- Stage 1: clone the branch tip and freeze it for the build ------------
 FROM alpine:3.20 AS lmcache-src
 ARG LMCACHE_REPO=https://github.com/thefnordling/LMCache.git
-ARG LMCACHE_BRANCH=feat-qwen38-flash-next-support
+ARG LMCACHE_BRANCH=feat-qwen38-flash-next-support-demo
 RUN apk add --no-cache git \
  && git clone --branch "${LMCACHE_BRANCH}" --single-branch "${LMCACHE_REPO}" /LMCache \
  && cd /LMCache \
@@ -27,7 +27,7 @@ RUN apk add --no-cache git \
 
 # ---- Stage 2: build the wheel in the matching CUDA/torch toolchain --------
 FROM ${VLLM_BASE} AS lmcache-wheel
-ARG LMCACHE_VERSION=0.5.5rc2.dev17
+ARG LMCACHE_VERSION=0.5.5rc2.dev19
 ENV TORCH_CUDA_ARCH_LIST=12.0 \
     SETUPTOOLS_SCM_PRETEND_VERSION=${LMCACHE_VERSION} \
     CPATH=/usr/local/lib/python3.12/dist-packages/nvidia/cu13/include \
@@ -40,7 +40,7 @@ RUN mkdir -p /src && tar -xf /src.tar -C /src \
 # ---- Stage 3: final image = base + freshly built wheel --------------------
 FROM ${VLLM_BASE}
 ARG LMCACHE_REPO=https://github.com/thefnordling/LMCache.git
-ARG LMCACHE_BRANCH=feat-qwen38-flash-next-support
+ARG LMCACHE_BRANCH=feat-qwen38-flash-next-support-demo
 COPY --from=lmcache-src /BUILD_INFO /usr/local/share/llmcache-server/BUILD_INFO
 COPY --from=lmcache-wheel /wheels/lmcache-*.whl /tmp/
 RUN pip install --force-reinstall --no-deps /tmp/lmcache-*.whl \

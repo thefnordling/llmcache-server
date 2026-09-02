@@ -29,13 +29,16 @@ lookup hits).
 ## Provenance
 
 Wheel source: [`thefnordling/LMCache`](https://github.com/thefnordling/LMCache)
-branch `feat-qwen38-flash-next-support`, rebased on LMCache `dev`
-(`bbd38f08`):
+branch `feat-qwen38-flash-next-support-demo` (deployment combo), rebased on
+LMCache `dev` (`bbd38f08`):
 
 | Commit | Change |
 |---|---|
 | `50a7fbc4` | Padded NHD content-size KV cache support (needed for vLLM's layer-padded KV pools) |
-| `55dd23e7` | Hybrid state-page fixes: store gate + lookup window (see below) |
+| `76993039` | Hybrid state-page fixes: store gate + lookup window (see below) |
+
+The identical fix is submitted upstream as PR branch
+`feat-qwen38-flash-next-support` (`6d3503f7`, without the padded-NHD pick).
 
 **Store path fix:** `GetStoreMetadata` bounded the storable prefix with
 `min(len(ids) * tokens_per_block)` across *all* engine groups. Constant-size
