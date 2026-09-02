@@ -10,14 +10,19 @@ lookup hits).
 
 ## Contents
 
-- `Dockerfile` — overlay on `vllm/vllm-openai:qwen38-flash-next` (base must exist
-  locally; it is a custom home-built image). Pulls the LMCache wheel from this
-  repo's GitHub releases (public; no auth at build time), verifies its SHA256,
-  then force-installs it. Override the wheel with
-  `--build-arg LMCACHE_WHEEL_URL=...`.
-- Wheel: attached to release [`v0.5.5rc2.dev16`](https://github.com/thefnordling/llmcache-server/releases/tag/v0.5.5rc2.dev16)
-  (CUDA 13 / torch cu130 toolchain, `TORCH_CUDA_ARCH_LIST=12.0`, Python 3.12)
-  - SHA256: `108bae056c57270f51ec0eb53968681206b67b39eee974d12985e8eec2ef457f`
+- `Dockerfile` — **multi-stage** overlay; no binary artifacts in this repo.
+  1. `lmcache-src` (alpine): clones the fork, checks out the pinned commit
+     (`git rev-parse` verified), exports it via `git archive`.
+  2. `lmcache-wheel`: builds the wheel from that exact tree inside the same
+     CUDA/torch environment as the final image (native extensions must match
+     the runtime torch).
+  3. final: `COPY`s the freshly built wheel into the vLLM base and
+     force-installs it. The image carries an
+     `io.llmcache.source-commit` label.
+
+  Build args: `LMCACHE_REPO`, `LMCACHE_BRANCH`, `LMCACHE_COMMIT` (pin),
+  `VLLM_BASE` (the vLLM image to overlay; must exist locally — the default is
+  a custom home-built image).
 
 ## Provenance
 
@@ -50,8 +55,13 @@ cold-L1 replay serves from the fs L2 adapter and L1 hydrates.
 
 ## Build
 
+Requires the `vllm/vllm-openai:qwen38-flash-next` base image locally (custom
+build; point `VLLM_BASE` at your own vLLM image otherwise). The wheel is
+compiled during the build (~5 min), so no prebuilt blob is trusted:
+
 ```bash
 docker build -t vllm/vllm-openai:qwen38-flash-next-pr4772-gate .
+docker inspect vllm/vllm-openai:qwen38-flash-next-pr4772-gate   --format '{{ index .Config.Labels "io.llmcache.source-commit" }}'
 ```
 
 ## Run (MP server)
@@ -77,16 +87,3 @@ lmcache server \
 
 And on the vLLM side: `--mamba-cache-mode align` plus the MP connector config
 (`kv_transfer_config.kv_connector=LMCacheMPConnector`, `lmcache.mp.host/port`).
-
-## Rebuilding the wheel from source
-
-```bash
-git clone -b pr4772-gate-validation https://github.com/thefnordling/LMCache
-docker run --rm -v $PWD/LMCache:/src \
-  -e TORCH_CUDA_ARCH_LIST=12.0 \
-  -e SETUPTOOLS_SCM_PRETEND_VERSION=0.5.5rc2.dev16 \
-  -e CPATH=/usr/local/lib/python3.12/dist-packages/nvidia/cu13/include \
-  -e LIBRARY_PATH=/usr/local/lib/python3.12/dist-packages/nvidia/cu13/lib \
-  --entrypoint bash vllm/vllm-openai:qwen38-flash-next \
-  -c "pip install -q wheel setuptools 'packaging>=24.2' ninja && cd /src && pip wheel . --no-deps --no-build-isolation -w /src/dist -q"
-```
